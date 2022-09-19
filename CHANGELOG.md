@@ -11,4 +11,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - This CHANGELOG file to keep track of project changes.
 - A README document introducing the project.
 - The UNILICENSE.
-- A folder containing git configuration files.
+- A `git` folder including the `.gitconfig` and `.gitignore` files.
+- A `macos` folder including a `setup` script. 
