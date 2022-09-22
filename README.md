@@ -83,6 +83,8 @@ $HOME/Developer/dotfiles/bin/SCRIPT_NAME
 The Unlicense. See `UNILICENSE` for more information.
 
 <!-- elevator -->
-<pre align="center"><a href="#read-me">BACK TO TOP</a></pre>
+<div align="center">
+<pre><a href="#read-me">BACK TO TOP</a></pre>
+</div>
 
 </div>
