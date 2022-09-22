@@ -1,0 +1,111 @@
+#!/usr/bin/env bash
+#
+# Install dotfiles.
+# shellcheck disable=1091,1090
+
+# Abort conditions.
+set -Eeuo pipefail
+[[ ! "$OSTYPE" =~ ^darwin ]] && exit 1 # not configured for other platforms
+
+# Declare script constant variables.
+SCRIPT_VERSION="0.1.0"
+SCRIPT_NAME="$(basename "$0")"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)"
+ROOT_DIR="$(cd "$(dirname "${SCRIPT_DIR}")" &>/dev/null && pwd -P)"
+LIB_DIR="${ROOT_DIR}/lib"
+readonly SCRIPT_VERSION SCRIPT_NAME SCRIPT_DIR ROOT_DIR LIB_DIR
+
+# Include helper files.
+load_files() {
+  local env="${ROOT_DIR}/.env"
+  . "$env"
+  for lib in log \
+    ui \
+    util; do
+    . "${LIB_DIR}/${lib}.sh"
+  done
+}
+
+# Show info and request approval.
+head() {
+  [[ ${DEBUG_ENABLED:-false} == false ]] && clear
+  log::heading "dotfiles ${SCRIPT_NAME} v${SCRIPT_VERSION}"
+  log::heading "${SOURCE}"
+  log::note "Please review the config file before running this script."
+  util::prompt_confirm "Are you sure you want to proceed?" || exit 0
+  util::prompt_sudo
+}
+
+update_system() {
+  if [[ ${CLEAN_INSTALL:-false} == true ]]; then
+    log::note "Check for system updates."
+    softwareupdate -i -a && log::success "System up to date."
+  fi
+}
+
+install_xclt() {
+  log::note "Check for Xcode command line tools."
+  if ! util::check_command xcode-select; then
+    xcode-select --install &&
+      log::success "Xcode command line tools now installed."
+  fi
+}
+
+__install_brew() {
+  log::note "Check for Homebrew."
+  if ! util::check_command brew; then
+    /bin/bash -c "$(curl -fsSL \
+      https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" &&
+      log::success "Homebrew now installed."
+    brew analytics off
+    export HOMEBREW_NO_ANALYTICS=1
+  fi
+}
+
+__update_brew() {
+  if [[ ${CLEAN_INSTALL} == false ]]; then
+    brew update
+    brew upgrade
+    brew cleanup
+  fi
+}
+
+setup_brew() {
+  __install_brew
+  log::note "Installing Homebrew packages. This can take a while..."
+  local brewfile="${ROOT_DIR}/macos/Brewfile"
+  brew bundle --file="${brewfile}"
+  __update_brew 
+}
+
+setup_git() {
+  find -H "${ROOT_DIR}/git" -name '.git*' |
+    while IFS= read -r src; do
+      target="$HOME/$(basename "${src}")"
+      util::sym_link "${src}" "${target}" &&
+        log::success "Created symlink for ${target} -> ${src}"
+    done
+}
+
+setup_system() {
+  log::note "Preparing system preferences."
+  local os_setup="${ROOT_DIR}/macos/setup.sh"
+  . "${os_setup}" &&
+    log::success "System settings are now configured, may require a reboot to apply them."
+  if util::prompt_confirm "Reboot now?"; then
+    sudo reboot
+  fi
+  log::success "Done."
+}
+
+main() {
+  load_files
+  head
+  update_system
+  install_xclt
+  setup_brew
+  setup_git
+  setup_system
+}
+
+main

@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+#
+# Download and run dotfiles installer.
+
+SOURCE="${SOURCE:-https://github.com/implete/dotfiles}"
+TARGET="${DOTFILES_DIR:-$HOME/Developer/dotfiles}"
+
+if [[ ! -s "${TARGET}" ]]; then
+  mkdir -p "${TARGET}" &&
+    cd "$_" ||
+    exit 1
+
+  if [[ -n $(which git) ]]; then
+    git clone "$SOURCE" "$TARGET"
+  elif [[ -n $(which curl) ]]; then
+    curl -fsSL --connect-timeout 5 --retry 5 --retry-delay 10 \
+      --retry-max-time 60 "$SOURCE/tarball/main" | tar -xzv --strip-components 1
+  else
+    printf "%s ${SOURCE}\n" "No tool available for download. Use the link instead:"
+    exit 1
+  fi
+fi
+
+# shellcheck source=/dev/null
+. "${TARGET}/bin/setup"
