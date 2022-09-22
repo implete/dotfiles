@@ -74,6 +74,8 @@ $HOME/Developer/dotfiles/bin/SCRIPT_NAME
 * *git/* contains the symlinked .git files
 * *lib/* contains helper scripts
 * *macos/* contains system setup files
+* *private/* kept on a private repository, contains custom settings, for example a `.gitconfig` file with my own username/email included in the symlinked file.
+
 
 <!-- license -->
 ## License
